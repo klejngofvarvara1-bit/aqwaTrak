@@ -1,35 +1,21 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/material.dart';
+Future<void> refreshQuoteFromApi() async {
+  try {
+    final response = await http.get(
+      Uri.parse('https://zenquotes.io/api/random'),
+    );
 
-class ProfileState extends ChangeNotifier {
-  String? name;
-  String? quote;
-  String? avatarPath;
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final newQuote = data[0]['q'];
 
-  Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    name = prefs.getString('name');
-    quote = prefs.getString('quote');
-    avatarPath = prefs.getString('avatar');
-    notifyListeners();
+      quote = newQuote;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('quote', quote);
+
+      notifyListeners();
+    }
+  } catch (e) {
+    // если API временно недоступен — ничего не ломаем
   }
-
-  Future<void> setProfile({
-    required String name,
-    required String quote,
-    required String avatarPath,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('name', name);
-    await prefs.setString('quote', quote);
-    await prefs.setString('avatar', avatarPath);
-
-    this.name = name;
-    this.quote = quote;
-    this.avatarPath = avatarPath;
-
-    notifyListeners();
-  }
-  final profileState = ProfileState();
-
 }

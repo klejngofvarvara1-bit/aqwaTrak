@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
-
-// screens
 import 'screens/home_screen.dart';
 import 'screens/second_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/register_screen.dart';
-
-// state
 import 'screens/profile_state.dart';
 
 Future<void> main() async {
@@ -19,7 +15,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // загрузка профиля (имя, цитата, аватар)
+  // загружаем профиль при старте
   await profileState.load();
 
   runApp(const MyApp());
@@ -43,4 +39,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
