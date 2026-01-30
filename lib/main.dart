@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-import 'firebase_options.dart';
+import 'screens/profile_state.dart';
+import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/second_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/profile_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Firebase можно оставить, если уже настроен
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // загружаем профиль при старте
+  // 1) грузим профиль из SharedPreferences
   await profileState.load();
+  // 2) при каждом запуске обновляем цитату из API
+  await profileState.refreshQuoteFromApi();
 
   runApp(const MyApp());
 }
@@ -29,13 +31,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AqwaTrak',
+      theme: ThemeData(useMaterial3: true),
       initialRoute: '/register',
       routes: {
-        '/register': (context) => const RegisterScreen(),
-        '/': (context) => const HomeScreen(),
-        '/second': (context) => const SecondScreen(),
-        '/settings': (context) => const SettingsScreen(),
+        '/register': (_) => const RegisterScreen(),
+        '/home': (_) => const HomeScreen(),
+        '/second': (_) => const SecondScreen(),
       },
     );
   }
 }
+
+

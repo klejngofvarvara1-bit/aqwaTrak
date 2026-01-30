@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'profile_state.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -9,78 +9,76 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  bool _loading = false;
+  final _nameController = TextEditingController();
+  final _quoteController = TextEditingController();
 
-  Future<void> _register() async {
-    setState(() => _loading = true);
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _email.text.trim(),
-        password: _password.text.trim(),
-      );
-
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/');
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Ошибка регистрации')),
-      );
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = profileState.name;
+    _quoteController.text = profileState.quote;
   }
 
   @override
   void dispose() {
-    _email.dispose();
-    _password.dispose();
+    _nameController.dispose();
+    _quoteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveAndGo() async {
+    final name = _nameController.text.trim().isEmpty ? 'User' : _nameController.text.trim();
+    final quote = _quoteController.text.trim().isEmpty ? profileState.quote : _quoteController.text.trim();
+
+    await profileState.setProfile(name: name, quote: quote);
+
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+
+  Future<void> _getNewQuote() async {
+    await profileState.refreshQuoteFromApi();
+    _quoteController.text = profileState.quote;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFBFF3F1),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Регистрация',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 20),
-
-              TextField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              const SizedBox(height: 12),
-
-              TextField(
-                controller: _password,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Пароль (min 6)'),
-              ),
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _register,
-                  child: _loading
-                      ? const CircularProgressIndicator()
-                      : const Text('Создать аккаунт'),
+      appBar: AppBar(title: const Text('Регистрация')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Имя'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _quoteController,
+              decoration: const InputDecoration(labelText: 'Любимая цитата'),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _getNewQuote,
+                    child: const Text('Случайная цитата (API)'),
+                  ),
                 ),
+              ],
+            ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _saveAndGo,
+                child: const Text('Сохранить и войти'),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
